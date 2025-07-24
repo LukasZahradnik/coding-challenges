@@ -12,6 +12,20 @@ type ECCKeyPair struct {
 	Private *ecdsa.PrivateKey
 }
 
+func (p *ECCKeyPair) ToBytes() ([]byte, []byte, error) {
+	privateKeyBytes, err := x509.MarshalECPrivateKey(p.Private)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	publicKeyBytes, err := x509.MarshalPKIXPublicKey(p.Public)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return privateKeyBytes, publicKeyBytes, nil
+}
+
 // ECCMarshaler can encode and decode an ECC key pair.
 type ECCMarshaler struct{}
 
@@ -23,12 +37,7 @@ func NewECCMarshaler() ECCMarshaler {
 // Encode takes an ECCKeyPair and encodes it to be written on disk.
 // It returns the public and the private key as a byte slice.
 func (m ECCMarshaler) Encode(keyPair ECCKeyPair) ([]byte, []byte, error) {
-	privateKeyBytes, err := x509.MarshalECPrivateKey(keyPair.Private)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	publicKeyBytes, err := x509.MarshalPKIXPublicKey(keyPair.Public)
+	privateKeyBytes, publicKeyBytes, err := keyPair.ToBytes()
 	if err != nil {
 		return nil, nil, err
 	}

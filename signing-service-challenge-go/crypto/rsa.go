@@ -12,6 +12,10 @@ type RSAKeyPair struct {
 	Private *rsa.PrivateKey
 }
 
+func (p *RSAKeyPair) ToBytes() ([]byte, []byte) {
+	return x509.MarshalPKCS1PrivateKey(p.Private), x509.MarshalPKCS1PublicKey(p.Public)
+}
+
 // RSAMarshaler can encode and decode an RSA key pair.
 type RSAMarshaler struct{}
 
