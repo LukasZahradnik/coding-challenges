@@ -61,7 +61,7 @@ func TestListItems(t *testing.T) {
 	}
 
 	store.Store("some id", 1)
-	store.Store("some id", 2)
+	store.Store("some other id", 2)
 
 	items, err = store.List()
 	if err != nil {
@@ -72,11 +72,11 @@ func TestListItems(t *testing.T) {
 		t.Errorf("Unexpected size of the item list: %d, expected 2", len(items))
 	}
 
-	if slices.Contains(items, 1) {
+	if !slices.Contains(items, 1) {
 		t.Error("Item '1' not found in the item list")
 	}
 
-	if slices.Contains(items, 2) {
+	if !slices.Contains(items, 2) {
 		t.Error("Item '2' not found in the item list")
 	}
 }
