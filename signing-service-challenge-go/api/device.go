@@ -79,6 +79,7 @@ func (s *Server) SignTransaction(response http.ResponseWriter, request *http.Req
 		return
 	}
 
+	// Generic solution to lock the entity to not run into race condition while using counter
 	if err = s.store.Lock(id); err != nil {
 		handleStoreErr(response, err)
 
