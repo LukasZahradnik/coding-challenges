@@ -14,6 +14,10 @@ import (
 	"github.com/google/uuid"
 )
 
+type KeyPair interface {
+	ToBytes() ([]byte, []byte, error)
+}
+
 func (s *Server) CreateSignatureDevice(response http.ResponseWriter, request *http.Request) {
 	var payload dto.CreateSignatureDeviceRequest
 	if err := json.NewDecoder(request.Body).Decode(&payload); err != nil {
@@ -25,7 +29,7 @@ func (s *Server) CreateSignatureDevice(response http.ResponseWriter, request *ht
 	id := uuid.NewString()
 	privateKey, publicKey, err := getKeys(domain.SignatureAlgorithm(payload.Algorithm))
 	if err != nil {
-		WriteErrorResponse(response, http.StatusBadRequest, []string{fmt.Sprintf("falied to create keys: %s", err.Error())})
+		WriteErrorResponse(response, http.StatusBadRequest, []string{fmt.Sprintf("failed to create keys: %s", err.Error())})
 
 		return
 	}
@@ -189,26 +193,25 @@ func getSignedData(data string, privateKey []byte, algorithm domain.SignatureAlg
 }
 
 func getKeys(algorithm domain.SignatureAlgorithm) ([]byte, []byte, error) {
-	if algorithm == domain.RSAAlgorithm {
+	var (
+		keyPair KeyPair
+		err     error
+	)
+
+	switch algorithm {
+	case domain.RSAAlgorithm:
 		generator := crypto.RSAGenerator{}
-		pair, err := generator.Generate()
-		if err != nil {
-			return nil, nil, err
-		}
-
-		privateKeyBytes, publicKeyBytes := pair.ToBytes()
-		return privateKeyBytes, publicKeyBytes, nil
-	}
-
-	if algorithm == domain.ECCAlgorithm {
+		keyPair, err = generator.Generate()
+	case domain.ECCAlgorithm:
 		generator := crypto.ECCGenerator{}
-		pair, err := generator.Generate()
-		if err != nil {
-			return nil, nil, err
-		}
-
-		return pair.ToBytes()
+		keyPair, err = generator.Generate()
+	default:
+		return nil, nil, fmt.Errorf("invalid algorithm %s", algorithm)
 	}
 
-	return nil, nil, fmt.Errorf("invalid algorithm %s", algorithm)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return keyPair.ToBytes()
 }
